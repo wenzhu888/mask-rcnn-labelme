@@ -28,6 +28,11 @@ There are options:
 - Platform agonistic installation: Anaconda, Docker
 - Platform specific installation: Ubuntu, macOS
 
+Install with source code.   
+```bash
+sudo python setup.py install
+```
+
 **Anaconda**
 
 You need install [Anaconda](https://www.continuum.io/downloads), then run below:
