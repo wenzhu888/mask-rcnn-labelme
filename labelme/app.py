@@ -48,6 +48,16 @@ from labelme.colorDialog import ColorDialog
 from labelme.labelFile import LabelFile, LabelFileError
 from labelme.toolBar import ToolBar
 
+# import resources
+# from lib import struct, newAction, newIcon, addActions, fmtShortcut
+# from shape import Shape, DEFAULT_LINE_COLOR, DEFAULT_FILL_COLOR
+# from canvas import Canvas
+# from zoomWidget import ZoomWidget
+# from labelDialog import LabelDialog
+# from colorDialog import ColorDialog
+# from labelFile import LabelFile, LabelFileError
+# from toolBar import ToolBar
+
 
 __appname__ = 'labelme'
 
@@ -94,6 +104,12 @@ class MainWindow(QMainWindow, WindowMixin):
         super(MainWindow, self).__init__()
         self.setWindowTitle(__appname__)
 
+        # file lists
+        self.fileAmount = 0
+        self.fileLists = []
+        self.fileIdx = 0
+        self.localIdx = 0   # 表示一张图内部的多边形个数
+        self.currentFileName = ""
         # Whether we need to save or not.
         self.dirty = False
 
@@ -145,6 +161,8 @@ class MainWindow(QMainWindow, WindowMixin):
         self.canvas.scrollRequest.connect(self.scrollRequest)
 
         self.canvas.newShape.connect(self.newShape)
+        self.canvas.finishDraw.connect(self.finishDraw)
+        self.canvas.save.connect(self.save)
         self.canvas.shapeMoved.connect(self.setDirty)
         self.canvas.selectionChanged.connect(self.shapeSelectionChanged)
         self.canvas.drawingPolygon.connect(self.toggleDrawingSensitive)
@@ -602,7 +620,9 @@ class MainWindow(QMainWindow, WindowMixin):
 
         position MUST be in global coordinates.
         """
-        text = self.labelDialog.popUp()
+        # text = self.labelDialog.popUp()
+        text = "p_" + str(self.localIdx)
+        self.localIdx += 1
         if text is not None:
             self.addLabel(self.canvas.setLastLabel(text))
             if self.beginner(): # Switch to edit mode.
@@ -613,6 +633,31 @@ class MainWindow(QMainWindow, WindowMixin):
             self.setDirty()
         else:
             self.canvas.undoLastLine()
+
+    def finishDraw(self):
+        self.save()
+        print("finishDraw, %d" % (self.fileIdx % self.fileAmount))
+        # 表示一张图内多边形的个数 
+        self.localIdx = 0
+
+        # 图片文件遍历
+        self.fileIdx += 1
+        filename = self.fileLists[self.fileIdx % self.fileAmount]
+        filename = str(filename)
+        self.currentFileName = filename
+        if filename:
+            self.loadFile(filename)
+            jsonFile = os.path.splitext(filename)[0] + ".json"
+            if os.path.exists(jsonFile):
+                print jsonFile
+                self.loadFile(jsonFile)
+
+
+    def save(self):
+        print("save")
+        currentFileName = self.currentFileName
+        self._saveFile(os.path.splitext(currentFileName)[0]+".json")
+
 
     def scrollRequest(self, delta, orientation):
         units = - delta * 0.1 # natural scroll
@@ -771,13 +816,26 @@ class MainWindow(QMainWindow, WindowMixin):
                    for fmt in QImageReader.supportedImageFormats()]
         filters = "Image & Label files (%s)" % \
                 ' '.join(formats + ['*%s' % LabelFile.suffix])
-        filename = QFileDialog.getOpenFileName(self,
-            '%s - Choose Image or Label file' % __appname__, path, filters)
+        dirPath = QFileDialog.getExistingDirectory(self, "choose directory","/home/klm")  
+        dirPath = str(dirPath)
+        self.fileLists = os.listdir(dirPath)
+        self.fileLists = [os.path.join(dirPath, i) for i in self.fileLists if i.endswith(".jpg")]
+        self.fileAmount = len(self.fileLists)
+
+        print((self.fileLists)[0])
+        # filename = QFileDialog.getOpenFileName(self,
+            # '%s - Choose Image or Label file' % __appname__, path, filters)
+        filename = (self.fileLists)[0]
+        self.currentFileName = filename
         if PYQT5:
             filename, _ = filename
         filename = str(filename)
         if filename:
             self.loadFile(filename)
+            jsonFile = os.path.splitext(filename)[0] + ".json"
+            if os.path.exists(jsonFile):
+                print jsonFile
+                self.loadFile(jsonFile)
 
     def saveFile(self, _value=False):
         assert not self.image.isNull(), "cannot save empty image"
@@ -954,6 +1012,7 @@ def main():
 
     filename = args.filename
     output = args.output
+    print "app"
 
     app = QApplication(sys.argv)
     app.setApplicationName(__appname__)
@@ -962,3 +1021,6 @@ def main():
     win.show()
     win.raise_()
     sys.exit(app.exec_())
+
+# if __name__ == '__main__':
+#     main()

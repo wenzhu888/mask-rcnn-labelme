@@ -51,6 +51,8 @@ class Canvas(QWidget):
     selectionChanged = pyqtSignal(bool)
     shapeMoved = pyqtSignal()
     drawingPolygon = pyqtSignal(bool)
+    finishDraw = pyqtSignal(bool)
+    save = pyqtSignal()
 
     CREATE, EDIT = 0, 1
 
@@ -143,6 +145,7 @@ class Canvas(QWidget):
                 self.line.line_color = color
                 self.repaint()
                 self.current.highlightClear()
+
             return
 
         # Polygon copy moving.
@@ -234,6 +237,9 @@ class Canvas(QWidget):
             self.selectShapePoint(pos)
             self.prevPoint = pos
             self.repaint()
+        elif ev.button() == Qt.MiddleButton:
+            self.finishDraw.emit(True)
+            self.update()
 
     def mouseReleaseEvent(self, ev):
         if ev.button() == Qt.RightButton:
@@ -530,6 +536,9 @@ class Canvas(QWidget):
             self.update()
         elif key == Qt.Key_Return and self.canCloseShape():
             self.finalise()
+        elif key == Qt.Key_S:
+            self.save.emit()
+
 
     def setLastLabel(self, text):
         assert text
