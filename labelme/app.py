@@ -104,6 +104,7 @@ class MainWindow(QMainWindow, WindowMixin):
         super(MainWindow, self).__init__()
         self.setWindowTitle(__appname__)
 
+        
         # file lists
         self.fileAmount = 0
         self.fileLists = []
@@ -162,7 +163,6 @@ class MainWindow(QMainWindow, WindowMixin):
 
         self.canvas.newShape.connect(self.newShape)
         self.canvas.finishDraw.connect(self.finishDraw)
-        self.canvas.save.connect(self.save)
         self.canvas.shapeMoved.connect(self.setDirty)
         self.canvas.selectionChanged.connect(self.shapeSelectionChanged)
         self.canvas.drawingPolygon.connect(self.toggleDrawingSensitive)
@@ -635,8 +635,8 @@ class MainWindow(QMainWindow, WindowMixin):
             self.canvas.undoLastLine()
 
     def finishDraw(self):
-        self.save()
         print("finishDraw, %d" % (self.fileIdx % self.fileAmount))
+        self.save()
         # 表示一张图内多边形的个数 
         self.localIdx = 0
 
@@ -837,6 +837,7 @@ class MainWindow(QMainWindow, WindowMixin):
                 print jsonFile
                 self.loadFile(jsonFile)
 
+
     def saveFile(self, _value=False):
         assert not self.image.isNull(), "cannot save empty image"
         if self.hasLabels():
@@ -964,7 +965,6 @@ class MainWindow(QMainWindow, WindowMixin):
         self.canvas.endMove(copy=False)
         self.setDirty()
 
-
 class Settings(object):
     """Convenience dict-like wrapper around QSettings."""
     def __init__(self, types=None):
@@ -1012,7 +1012,6 @@ def main():
 
     filename = args.filename
     output = args.output
-    print "app"
 
     app = QApplication(sys.argv)
     app.setApplicationName(__appname__)

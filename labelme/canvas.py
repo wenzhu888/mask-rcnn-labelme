@@ -52,7 +52,6 @@ class Canvas(QWidget):
     shapeMoved = pyqtSignal()
     drawingPolygon = pyqtSignal(bool)
     finishDraw = pyqtSignal(bool)
-    save = pyqtSignal()
 
     CREATE, EDIT = 0, 1
 
@@ -237,9 +236,6 @@ class Canvas(QWidget):
             self.selectShapePoint(pos)
             self.prevPoint = pos
             self.repaint()
-        elif ev.button() == Qt.MiddleButton:
-            self.finishDraw.emit(True)
-            self.update()
 
     def mouseReleaseEvent(self, ev):
         if ev.button() == Qt.RightButton:
@@ -529,16 +525,18 @@ class Canvas(QWidget):
         ev.accept()
 
     def keyPressEvent(self, ev):
+        print("in key press event")
         key = ev.key()
         if key == Qt.Key_Escape and self.current:
             self.current = None
             self.drawingPolygon.emit(False)
             self.update()
         elif key == Qt.Key_Return and self.canCloseShape():
+            print("return key press...")
             self.finalise()
-        elif key == Qt.Key_S:
-            self.save.emit()
-
+        elif key == Qt.Key_S and self.finishDraw.emit(True) and False:
+            print("s key press...")
+            self.finishDraw.emit(True)
 
     def setLastLabel(self, text):
         assert text
